@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brown Bear, Brown Bear, What Do You See? - 3-Player Classroom Game</title>
+    <!-- Tailwind CSS for modern responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for playful child-friendly typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', 'Comic Neue', cursive, sans-serif;
+            background: linear-gradient(135deg, #fef08a 0%, #fed7aa 50%, #bae6fd 100%);
+            min-height: 100vh;
+            user-select: none;
+        }
+        .story-shadow {
+            text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.15);
+        }
+        .btn-shadow {
+            box-shadow: 0 6px 0px rgba(0, 0, 0, 0.15);
+            transition: all 0.1s ease;
+        }
+        .btn-shadow:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0px rgba(0, 0, 0, 0.15);
+        }
+        /* Floating words animation for Mini-Game 3 */
+        @keyframes floatSlow {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .floating-word {
+            animation: floatSlow 3s ease-in-out infinite;
+        }
+        /* Single Big Star Animation */
+        @keyframes bigStarPop {
+            0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+            50% { transform: scale(1.6) rotate(15deg); opacity: 1; }
+            70% { transform: scale(1.2) rotate(-10deg); }
+            100% { transform: scale(1.4) rotate(0deg); opacity: 0; }
+        }
+        .anim-big-star {
+            position: absolute;
+            animation: bigStarPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            pointer-events: none;
+            font-size: 6rem;
+            z-index: 30;
+        }
+        /* Crying emoji exaggerated animation */
+        @keyframes cryBounce {
+            0% { transform: scale(0) translateY(20px); opacity: 0; }
+            30% { transform: scale(1.3) translateY(-10px) rotate(-10deg); opacity: 1; }
+            50% { transform: scale(1) translateY(5px) rotate(10deg); }
+            70% { transform: scale(1.1) translateY(-5px) rotate(-5deg); }
+            100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
+        }
+        @keyframes tearDrop {
+            0% { transform: translateY(0) scale(0.8); opacity: 1; }
+            100% { transform: translateY(60px) scale(1.2); opacity: 0; }
+        }
+        .anim-crying {
+            animation: cryBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .anim-tear {
+            position: absolute;
+            animation: tearDrop 0.8s ease-in infinite;
+            pointer-events: none;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-800 p-3 md:p-6">
+
+    <!-- Header -->
+    <header class="text-center mb-4 relative">
+        <!-- Audio Control Button -->
+        <div class="absolute right-2 top-0 flex items-center gap-2">
+            <button onclick="toggleBackgroundMusic()" id="music-toggle-btn" class="bg-white/90 border-2 border-amber-300 px-3 py-2 rounded-2xl font-bold shadow hover:bg-amber-100 transition text-sm flex items-center gap-1">
+                🎵 <span id="music-status">Music: Off</span>
+            </button>
+        </div>
+        <h1 class="text-3xl md:text-5xl font-extrabold text-amber-700 story-shadow tracking-wide mb-1">
+            🐻 Brown Bear, Brown Bear, What Do You See? 🐻
+        </h1>
+        <p class="text-lg md:text-xl font-bold text-sky-700 story-shadow">
+            Interactive 3-Player Classroom Learning Game
+        </p>
+    </header>
+
+    <!-- Main App Container -->
+    <main id="app-container" class="flex-1 flex flex-col max-w-7xl mx-auto w-full">
+
+        <!-- SETUP SCREEN / MINI-GAME SELECTION -->
+        <div id="setup-screen" class="bg-white/90 backdrop-blur-md rounded-3xl p-6 md:p-10 shadow-2xl border-4 border-amber-300 max-w-3xl mx-auto w-full text-center my-auto">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-purple-700 mb-6">Choose Your Adventure! 🎨🐻✏️</h2>
+            
+            <div class="mb-8 text-left bg-amber-50 p-4 rounded-2xl border-2 border-amber-200">
+                <label class="block text-xl font-bold text-amber-900 mb-2">⏱️ Select Timer Duration for Mini-Game:</label>
+                <div class="grid grid-cols-3 sm:grid-cols-5 gap-2" id="timer-options">
+                    <button onclick="setTimerDuration(10)" class="timer-btn p-3 rounded-xl font-bold text-lg bg-white border-2 border-amber-300 hover:bg-amber-100 transition">10s</button>
+                    <button onclick="setTimerDuration(20)" class="timer-btn p-3 rounded-xl font-bold text-lg bg-amber-400 text-white border-2 border-amber-500 shadow-md transition" id="default-timer">20s</button>
+                    <button onclick="setTimerDuration(30)" class="timer-btn p-3 rounded-xl font-bold text-lg bg-white border-2 border-amber-300 hover:bg-amber-100 transition">30s</button>
+                    <button onclick="setTimerDuration(60)" class="timer-btn p-3 rounded-xl font-bold text-lg bg-white border-2 border-amber-300 hover:bg-amber-100 transition">60s</button>
+                    <button onclick="setCustomTimer()" class="timer-btn p-3 rounded-xl font-bold text-lg bg-white border-2 border-amber-300 hover:bg-amber-100 transition col-span-3 sm:col-span-1">Custom</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Mini-Game 1 -->
+                <button onclick="startMiniGame(1)" class="btn-shadow flex flex-col items-center justify-center p-6 bg-rose-100 border-4 border-rose-400 rounded-3xl hover:bg-rose-200 group">
+                    <span class="text-5xl mb-3 group-hover:scale-110 transition">🎨</span>
+                    <span class="text-2xl font-extrabold text-rose-800">1. Colors</span>
+                    <span class="text-sm font-semibold text-rose-600 mt-1">Match color words & swatches</span>
+                </button>
+                <!-- Mini-Game 2 -->
+                <button onclick="startMiniGame(2)" class="btn-shadow flex flex-col items-center justify-center p-6 bg-sky-100 border-4 border-sky-400 rounded-3xl hover:bg-sky-200 group">
+                    <span class="text-5xl mb-3 group-hover:scale-110 transition">🐻</span>
+                    <span class="text-2xl font-extrabold text-sky-800">2. Animals</span>
+                    <span class="text-sm font-semibold text-sky-600 mt-1">Identify story animals</span>
+                </button>
+                <!-- Mini-Game 3 -->
+                <button onclick="startMiniGame(3)" class="btn-shadow flex flex-col items-center justify-center p-6 bg-emerald-100 border-4 border-emerald-400 rounded-3xl hover:bg-emerald-200 group">
+                    <span class="text-5xl mb-3 group-hover:scale-110 transition">✏️</span>
+                    <span class="text-2xl font-extrabold text-emerald-800">3. Make a phrase</span>
+                    <span class="text-sm font-semibold text-emerald-600 mt-1">Build story sentences</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- GAME SCREEN (3 Equal Player Columns) -->
+        <div id="game-screen" class="hidden grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 flex-1 w-full">
+            
+            <!-- PLAYER 1 SECTION -->
+            <div id="player-1-box" class="flex flex-col bg-white/95 rounded-3xl border-4 border-rose-400 shadow-xl p-4 md:p-6 relative overflow-hidden">
+                <div class="flex justify-between items-center bg-rose-100 p-3 rounded-2xl border-2 border-rose-300 mb-4">
+                    <h3 class="text-xl md:text-2xl font-extrabold text-rose-700">🎨 Player 1</h3>
+                    <div class="flex items-center gap-3">
+                        <span id="p1-timer" class="bg-white px-3 py-1 rounded-full font-bold text-rose-600 border border-rose-300 text-sm">⏱ 20s</span>
+                        <span id="p1-score" class="bg-rose-500 text-white px-4 py-1 rounded-full font-extrabold text-lg shadow">⭐ 0</span>
+                    </div>
+                </div>
+                <!-- Dynamic Player 1 Content Area -->
+                <div id="p1-content" class="flex-1 flex flex-col items-center justify-center relative min-h-[350px]"></div>
+            </div>
+
+            <!-- PLAYER 2 SECTION -->
+            <div id="player-2-box" class="flex flex-col bg-white/95 rounded-3xl border-4 border-sky-400 shadow-xl p-4 md:p-6 relative overflow-hidden">
+                <div class="flex justify-between items-center bg-sky-100 p-3 rounded-2xl border-2 border-sky-300 mb-4">
+                    <h3 class="text-xl md:text-2xl font-extrabold text-sky-700">🐻 Player 2</h3>
+                    <div class="flex items-center gap-3">
+                        <span id="p2-timer" class="bg-white px-3 py-1 rounded-full font-bold text-sky-600 border border-sky-300 text-sm">⏱️ 20s</span>
+                        <span id="p2-score" class="bg-sky-500 text-white px-4 py-1 rounded-full font-extrabold text-lg shadow">⭐ 0</span>
+                    </div>
+                </div>
+                <!-- Dynamic Player 2 Content Area -->
+                <div id="p2-content" class="flex-1 flex flex-col items-center justify-center relative min-h-[350px]"></div>
+            </div>
+
+            <!-- PLAYER 3 SECTION -->
+            <div id="player-3-box" class="flex flex-col bg-white/95 rounded-3xl border-4 border-emerald-400 shadow-xl p-4 md:p-6 relative overflow-hidden">
+                <div class="flex justify-between items-center bg-emerald-100 p-3 rounded-2xl border-2 border-emerald-300 mb-4">
+                    <h3 class="text-xl md:text-2xl font-extrabold text-emerald-700">✏ Player 3</h3>
+                    <div class="flex items-center gap-3">
+                        <span id="p3-timer" class="bg-white px-3 py-1 rounded-full font-bold text-emerald-600 border border-emerald-300 text-sm">⏱️ 20s</span>
+                        <span id="p3-score" class="bg-emerald-500 text-white px-4 py-1 rounded-full font-extrabold text-lg shadow">⭐ 0</span>
+                    </div>
+                </div>
+                <!-- Dynamic Player 3 Content Area -->
+                <div id="p3-content" class="flex-1 flex flex-col items-center justify-center relative min-h-[350px]"></div>
+            </div>
+
+        </div>
+
+        <!-- GAME OVER / SUMMARY SCREEN -->
+        <div id="summary-screen" class="hidden bg-white/95 backdrop-blur-md rounded-3xl p-6 md:p-10 shadow-2xl border-4 border-amber-400 max-w-2xl mx-auto w-full text-center my-auto">
+            <h2 class="text-4xl font-extrabold text-amber-700 mb-4">🏆 Great Job Readers! 🏆</h2>
+            <p class="text-xl font-bold text-slate-600 mb-6">Here are the final scores for this round:</p>
+            
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <div class="bg-rose-50 border-4 border-rose-300 p-4 rounded-2xl">
+                    <div class="text-lg font-bold text-rose-700">Player 1</div>
+                    <div id="final-p1-score" class="text-3xl font-black text-rose-600 mt-2">0 pts</div>
+                </div>
+                <div class="bg-sky-50 border-4 border-sky-300 p-4 rounded-2xl">
+                    <div class="text-lg font-bold text-sky-700">Player 2</div>
+                    <div id="final-p2-score" class="text-3xl font-black text-sky-600 mt-2">0 pts</div>
+                </div>
+                <div class="bg-emerald-50 border-4 border-emerald-300 p-4 rounded-2xl">
+                    <div class="text-lg font-bold text-emerald-700">Player 3</div>
+                    <div id="final-p3-score" class="text-3xl font-black text-emerald-600 mt-2">0 pts</div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="restartSameGame()" class="btn-shadow px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xl rounded-2xl">
+                    🔄 Play Again
+                </button>
+                <button onclick="returnToMenu()" class="btn-shadow px-8 py-4 bg-purple-500 hover:bg-purple-600 text-white font-extrabold text-xl rounded-2xl">
+                    🏠 Choose Another Game
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        let audioCtx = null;
+        let musicPlaying = false;
+        let musicInterval = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playCorrectSound() {
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.6);
+            } catch (e) {
+                console.log("Audio not allowed yet");
+            }
+        }
+
+        function playWrongSound() {
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(250, now);
+                osc.frequency.linearRampToValueAtTime(150, now + 0.3);
+
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } catch (e) {
+                console.log("Audio not allowed yet");
+            }
+        }
+
+        function toggleBackgroundMusic() {
+            initAudio();
+            musicPlaying = !musicPlaying;
+            const statusSpan = document.getElementById('music-status');
+            
+            if (musicPlaying) {
+                statusSpan.innerText = "Music: On";
+                startBGM();
+            } else {
+                statusSpan.innerText = "Music: Off";
+                stopBGM();
+            }
+        }
+
+        function startBGM() {
+            if (musicInterval) clearInterval(musicInterval);
+            const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
+            let noteIdx = 0;
+
+            musicInterval = setInterval(() => {
+                if (!musicPlaying) return;
+                try {
+                    const now = audioCtx.currentTime;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(notes[noteIdx], now);
+
+                    gain.gain.setValueAtTime(0.03, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+
+                    noteIdx = (noteIdx + 1) % notes.length;
+                } catch (e) {}
+            }, 500);
+        }
+
+        function stopBGM() {
+            if (musicInterval) {
+                clearInterval(musicInterval);
+                musicInterval = null;
+            }
+        }
+
+        let selectedDuration = 20;
+        let activeMiniGame = 1;
+
+        const gameStates = {
+            1: { score: 0, timeLeft: 20, timerInterval: null, active: false, data: {} },
+            2: { score: 0, timeLeft: 20, timerInterval: null, active: false, data: {} },
+            3: { score: 0, timeLeft: 20, timerInterval: null, active: false, data: {} }
+        };
+
+        const colorData = [
+            { name: 'brown', hex: '#8B4513' },
+            { name: 'red', hex: '#EF4444' },
+            { name: 'blue', hex: '#3B82F6' },
+            { name: 'yellow', hex: '#EAB308' },
+            { name: 'green', hex: '#22C55E' },
+            { name: 'purple', hex: '#A855F7' },
+            { name: 'white', hex: '#F3F4F6' },
+            { name: 'black', hex: '#111827' }
+        ];
+
+        const animalData = [
+            { name: 'bear', emoji: '🐻', file: 'brownbear.png' },
+            { name: 'bird', emoji: '🐦', file: 'redbird.png' },
+            { name: 'sheep', emoji: '🐑', file: 'blacksheep.png' },
+            { name: 'dog', emoji: '🐶', file: 'whitedog.png' },
+            { name: 'cat', emoji: '🐱', file: 'purplecat.png' },
+            { name: 'frog', emoji: '🐸', file: 'greenfrog.png' },
+            { name: 'duck', emoji: '🦆', file: 'yellowduck.png' },
+            { name: 'horse', emoji: '🐴', file: 'bluehorse.png' }
+        ];
+
+        const phraseData = [
+            { phrase: 'a brown bear', file: 'brownbear.png', emoji: '🐻', color: '#8B4513' },
+            { phrase: 'a red bird', file: 'redbird.png', emoji: '🐦', color: '#EF4444' },
+            { phrase: 'a blue horse', file: 'bluehorse.png', emoji: '🐴', color: '#3B82F6' },
+            { phrase: 'a yellow duck', file: 'yellowduck.png', emoji: '🦆', color: '#EAB308' },
+            { phrase: 'a green frog', file: 'greenfrog.png', emoji: '🐸', color: '#22C55E' },
+            { phrase: 'a purple cat', file: 'purplecat.png', emoji: '🐱', color: '#A855F7' },
+            { phrase: 'a white dog', file: 'whitedog.png', emoji: '🐶', color: '#64748B' },
+            { phrase: 'a black sheep', file: 'blacksheep.png', emoji: '🐑', color: '#111827' }
+        ];
+
+        function setTimerDuration(seconds) {
+            selectedDuration = seconds;
+            document.querySelectorAll('.timer-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-400', 'text-white', 'border-amber-500', 'shadow-md');
+                btn.classList.add('bg-white');
+            });
+            event.target.classList.remove('bg-white');
+            event.target.classList.add('bg-amber-400', 'text-white', 'border-amber-500', 'shadow-md');
+        }
+
+        function setCustomTimer() {
+            let custom = prompt("Enter timer seconds (e.g., 15, 45, 90):", "45");
+            if (custom && !isNaN(custom) && parseInt(custom) > 0) {
+                selectedDuration = parseInt(custom);
+                alert(`Timer set to ${selectedDuration} seconds!`);
+            }
+        }
+
+        function startMiniGame(gameId) {
+            initAudio();
+            activeMiniGame = gameId;
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('summary-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('grid');
+
+            for (let p = 1; p <= 3; p++) {
+                gameStates[p].score = 0;
+                gameStates[p].timeLeft = selectedDuration;
+                gameStates[p].active = true;
+                updateScoreDisplay(p);
+                updateTimerDisplay(p);
+                startPlayerTimer(p);
+                loadNextQuestion(p);
+            }
+        }
+
+        function startPlayerTimer(p) {
+            if (gameStates[p].timerInterval) clearInterval(gameStates[p].timerInterval);
+            
+            gameStates[p].timerInterval = setInterval(() => {
+                if (!gameStates[p].active) return;
+                gameStates[p].timeLeft--;
+                updateTimerDisplay(p);
+
+                if (gameStates[p].timeLeft <= 0) {
+                    clearInterval(gameStates[p].timerInterval);
+                    gameStates[p].active = false;
+                    showPlayerTimeUp(p);
+                    checkAllPlayersFinished();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay(p) {
+            document.getElementById(`p${p}-timer`).innerText = `⏱️ ${gameStates[p].timeLeft}s`;
+        }
+
+        function updateScoreDisplay(p) {
+            document.getElementById(`p${p}-score`).innerText = `⭐ ${gameStates[p].score}`;
+        }
+
+        function checkAllPlayersFinished() {
+            if (!gameStates[1].active && !gameStates[2].active && !gameStates[3].active) {
+                setTimeout(showSummaryScreen, 1000);
+            }
+        }
+
+        function showPlayerTimeUp(p) {
+            const container = document.getElementById(`p${p}-content`);
+            container.innerHTML = `
+                <div class="text-center p-6 animate-pulse">
+                    <div class="text-6xl mb-3">⌛</div>
+                    <h4 class="text-2xl font-extrabold text-slate-700 mb-2">Time's Up!</h4>
+                    <p class="text-lg font-bold text-slate-500">Final Score: ${gameStates[p].score} ⭐</p>
+                </div>
+            `;
+        }
+
+        function loadNextQuestion(p) {
+            if (!gameStates[p].active) return;
+            const container = document.getElementById(`p${p}-content`);
+            container.innerHTML = '';
+
+            if (activeMiniGame === 1) {
+                renderColorQuestion(p, container);
+            } else if (activeMiniGame === 2) {
+                renderAnimalQuestion(p, container);
+            } else if (activeMiniGame === 3) {
+                renderPhraseQuestion(p, container);
+            }
+        }
+
+        function renderColorQuestion(p, container) {
+            const correctObj = colorData[Math.floor(Math.random() * colorData.length)];
+            let wrongObj;
+            do {
+                wrongObj = colorData[Math.floor(Math.random() * colorData.length)];
+            } while (wrongObj.name === correctObj.name);
+
+            const choices = [correctObj, wrongObj].sort(() => Math.random() - 0.5);
+
+            container.innerHTML = `
+                <div class="w-full flex flex-col items-center justify-center">
+                    <p class="text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">What color is this?</p>
+                    <div class="w-32 h-32 rounded-3xl shadow-lg border-4 border-slate-200 mb-6 transition transform hover:scale-105" style="background-color: ${correctObj.hex};"></div>
+                    <div class="grid grid-cols-2 gap-4 w-full">
+                        ${choices.map(c => `
+                            <button onclick="handleColorAnswer(${p}, '${c.name.toLowerCase()}', '${correctObj.name.toLowerCase()}', this)" 
+                                class="btn-shadow p-4 rounded-2xl bg-white border-4 border-amber-300 text-xl font-extrabold text-slate-700 hover:bg-amber-50 transition lowercase">
+                                ${c.name.toLowerCase()}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleColorAnswer(p, chosen, correct, btnElem) {
+            if (!gameStates[p].active) return;
+            if (chosen === correct) {
+                gameStates[p].score++;
+                updateScoreDisplay(p);
+                playCorrectSound();
+                triggerBigStar(btnElem);
+                setTimeout(() => loadNextQuestion(p), 700);
+            } else {
+                playWrongSound();
+                triggerCryingEffect(document.getElementById(`p${p}-content`), btnElem);
+            }
+        }
+
+        function renderAnimalQuestion(p, container) {
+            const correctObj = animalData[Math.floor(Math.random() * animalData.length)];
+            let wrongObj;
+            do {
+                wrongObj = animalData[Math.floor(Math.random() * animalData.length)];
+            } while (wrongObj.name === correctObj.name);
+
+            const choices = [correctObj, wrongObj].sort(() => Math.random() - 0.5);
+
+            container.innerHTML = `
+                <div class="w-full flex flex-col items-center justify-center">
+                    <p class="text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">What animal is this?</p>
+                    <div class="w-32 h-32 bg-amber-50 rounded-3xl shadow-inner border-4 border-amber-200 flex items-center justify-center text-7xl mb-6">
+                        <img src="${correctObj.file}" alt="${correctObj.name}" class="w-24 h-24 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <span style="display:none;">${correctObj.emoji}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 w-full">
+                        ${choices.map(c => `
+                            <button onclick="handleAnimalAnswer(${p}, '${c.name.toLowerCase()}', '${correctObj.name.toLowerCase()}', this)" 
+                                class="btn-shadow p-4 rounded-2xl bg-white border-4 border-sky-300 text-xl font-extrabold text-slate-700 hover:bg-sky-50 transition lowercase">
+                                ${c.emoji} ${c.name.toLowerCase()}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleAnimalAnswer(p, chosen, correct, btnElem) {
+            if (!gameStates[p].active) return;
+            if (chosen === correct) {
+                gameStates[p].score++;
+                updateScoreDisplay(p);
+                playCorrectSound();
+                triggerBigStar(btnElem);
+                setTimeout(() => loadNextQuestion(p), 700);
+            } else {
+                playWrongSound();
+                triggerCryingEffect(document.getElementById(`p${p}-content`), btnElem);
+            }
+        }
+
+        function renderPhraseQuestion(p, container) {
+            const currentPhraseObj = phraseData[Math.floor(Math.random() * phraseData.length)];
+            const targetWords = currentPhraseObj.phrase.toLowerCase().split(' ');
+            
+            const allPossibleWords = ['a', 'brown', 'red', 'blue', 'yellow', 'green', 'purple', 'white', 'black', 'bear', 'bird', 'horse', 'duck', 'frog', 'cat', 'sheep', 'dog'];
+            let distractors = allPossibleWords.filter(w => !targetWords.includes(w));
+            let randomDistractor = distractors[Math.floor(Math.random() * distractors.length)];
+            
+            let shuffledWords = [...targetWords, randomDistractor].sort(() => Math.random() - 0.5);
+
+            gameStates[p].data.currentPhraseObj = currentPhraseObj;
+            gameStates[p].data.targetWords = targetWords;
+            gameStates[p].data.selectedWords = [];
+            gameStates[p].data.shuffledWords = shuffledWords;
+
+            renderPhraseUI(p, container);
+        }
+
+        function renderPhraseUI(p, container) {
+            const data = gameStates[p].data;
+            const phraseObj = data.currentPhraseObj;
+            const selected = data.selectedWords;
+            const target = data.targetWords;
+            const isComplete = selected.length === target.length;
+
+            container.innerHTML = `
+                <div class="w-full flex flex-col items-center justify-center">
+                    <div class="w-24 h-24 bg-amber-50 rounded-2xl border-4 border-amber-200 flex items-center justify-center text-5xl mb-3 shadow-inner overflow-hidden">
+                        <img src="${phraseObj.file}" alt="${phraseObj.phrase}" class="w-20 h-20 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <span style="display:none;">${phraseObj.emoji}</span>
+                    </div>
+
+                    <div class="w-full bg-amber-50/70 border-2 border-dashed border-amber-300 rounded-2xl p-3 mb-4 flex flex-col items-center justify-center gap-2 min-h-[75px]">
+                        <div class="flex justify-center items-center gap-2">
+                            ${target.map((t, idx) => `
+                                <div class="border-b-4 border-slate-400 px-3 py-1 min-w-[70px] text-center text-xl font-extrabold text-slate-800 lowercase">
+                                    ${selected[idx] || '___'}
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${isComplete ? `
+                            <button onclick="handleCheckPhrase(${p}, this)" class="btn-shadow mt-2 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-xl text-lg flex items-center gap-2 animate-bounce">
+                                ✔️ Done Reading! Check Answer
+                            </button>
+                        ` : ''}
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 w-full" id="word-pool-${p}">
+                        ${data.shuffledWords.map((word, i) => {
+                            const isUsed = selected.includes(word);
+                            return `
+                                <button onclick="handleWordClick(${p}, '${word.toLowerCase()}', this)" 
+                                    class="floating-word btn-shadow p-3 rounded-2xl bg-white border-3 border-emerald-300 text-lg font-bold text-slate-700 hover:bg-emerald-50 transition lowercase ${isUsed ? 'opacity-40 pointer-events-none' : ''}"
+                                    style="animation-delay: ${i * 0.4}s;">
+                                    ${word.toLowerCase()}
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleWordClick(p, word, btnElem) {
+            if (!gameStates[p].active) return;
+            const data = gameStates[p].data;
+            data.selectedWords.push(word);
+
+            const currentLength = data.selectedWords.length;
+            const target = data.targetWords;
+
+            if (data.selectedWords[currentLength - 1] !== target[currentLength - 1]) {
+                playWrongSound();
+                triggerCryingEffect(document.getElementById(`p${p}-content`), btnElem);
+                data.selectedWords = [];
+                setTimeout(() => {
+                    renderPhraseUI(p, document.getElementById(`p${p}-content`));
+                }, 800);
+                return;
+            }
+
+            renderPhraseUI(p, document.getElementById(`p${p}-content`));
+        }
+
+        function handleCheckPhrase(p, btnElem) {
+            if (!gameStates[p].active) return;
+            gameStates[p].score++;
+            updateScoreDisplay(p);
+            playCorrectSound();
+            triggerBigStar(btnElem);
+            setTimeout(() => {
+                loadNextQuestion(p);
+            }, 800);
+        }
+
+        function triggerBigStar(targetElement) {
+            const rect = targetElement.getBoundingClientRect();
+            const parent = targetElement.closest('.relative') || document.body;
+            const parentRect = parent.getBoundingClientRect();
+
+            const originX = rect.left + rect.width / 2 - parentRect.left;
+            const originY = rect.top + rect.height / 2 - parentRect.top;
+
+            const star = document.createElement('div');
+            star.className = 'anim-big-star';
+            star.innerText = '⭐';
+            star.style.left = `${originX - 40}px`;
+            star.style.top = `${originY - 50}px`;
+
+            parent.appendChild(star);
+            setTimeout(() => star.remove(), 800);
+        }
+
+        function triggerCryingEffect(container, targetElement) {
+            const overlay = document.createElement('div');
+            overlay.className = 'absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-20 transition-all duration-300';
+            overlay.innerHTML = `
+                <div class="relative flex flex-col items-center">
+                    <div class="text-7xl anim-crying mb-2">😭</div>
+                    <div class="flex gap-2">
+                        <span class="anim-tear" style="left: -20px; animation-delay: 0.1s;">💧</span>
+                        <span class="anim-tear" style="left: 0px; animation-delay: 0.3s;">💦</span>
+                        <span class="anim-tear" style="left: 20px; animation-delay: 0.2s;">💧</span>
+                    </div>
+                    <p class="text-xl font-extrabold text-blue-600 mt-4">Oops! Try Again! 🐻</p>
+                </div>
+            `;
+            container.appendChild(overlay);
+
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.remove(), 300);
+            }, 900);
+        }
+
+        function showSummaryScreen() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('grid');
+            document.getElementById('summary-screen').classList.remove('hidden');
+
+            document.getElementById('final-p1-score').innerText = `${gameStates[1].score} pts`;
+            document.getElementById('final-p2-score').innerText = `${gameStates[2].score} pts`;
+            document.getElementById('final-p3-score').innerText = `${gameStates[3].score} pts`;
+        }
+
+        function restartSameGame() {
+            startMiniGame(activeMiniGame);
+        }
+
+        function returnToMenu() {
+            document.getElementById('summary-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('setup-screen').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
